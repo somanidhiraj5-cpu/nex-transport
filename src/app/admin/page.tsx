@@ -39,12 +39,17 @@ export default function AdminDashboard() {
   const depCount = guests.filter(g => g.has_departure).length;
 
   async function assignCar(group: GuestGroup, carId: string | null) {
-    await fetch('/api/assign', {
+    const res = await fetch('/api/assign', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ guestIds: group.guests.map(g => g.id), carId, direction: group.direction }),
     });
-    fetchData();
+    if (!res.ok) {
+      const { error } = await res.json().catch(() => ({ error: 'Unknown error' }));
+      alert(`Assignment failed: ${error}`);
+      return;
+    }
+    await fetchData();
   }
 
   async function updateCarStatus(carId: string, status: CarStatus) {
@@ -181,6 +186,8 @@ export default function AdminDashboard() {
                     <div className="flex gap-2 mt-0.5 flex-wrap">
                       {g.has_arrival && <span className="text-xs text-blue-600">↓ {fmt12(g.arrival_time)}</span>}
                       {g.has_departure && <span className="text-xs text-amber-600">↑ {fmt12(g.departure_time)}</span>}
+                      {(g.group_size ?? 1) > 1 && <span className="text-xs text-purple-600">👥 {g.group_size}</span>}
+                      {g.table_name && <span className="text-xs text-slate-500">🪑 {g.table_name}</span>}
                     </div>
                     {g.notes && <p className="text-xs text-slate-400 italic mt-0.5">{g.notes}</p>}
                   </div>
@@ -232,9 +239,15 @@ function GroupCard({ group, index, cars, tab, onAssign }: {
             around <strong>{fmt12(group.anchor.toTimeString().slice(0, 5))}</strong>
           </span>
         )}
-        <span className="ml-auto text-xs font-semibold bg-slate-100 text-slate-600 rounded-full px-2.5 py-0.5">
-          {group.guests.length} {group.guests.length === 1 ? 'person' : 'people'}
-        </span>
+        {(() => {
+          const totalPeople = group.guests.reduce((sum, g) => sum + (g.group_size ?? 1), 0);
+          const guestCount = group.guests.length;
+          return (
+            <span className="ml-auto text-xs font-semibold bg-slate-100 text-slate-600 rounded-full px-2.5 py-0.5">
+              {guestCount} {guestCount === 1 ? 'booking' : 'bookings'} · {totalPeople} {totalPeople === 1 ? 'seat' : 'seats'}
+            </span>
+          );
+        })()}
       </div>
 
       {/* Guest rows */}
@@ -247,7 +260,19 @@ function GroupCard({ group, index, cars, tab, onAssign }: {
           return (
             <div key={g.id} className="px-4 py-2.5 flex items-center gap-3 flex-wrap">
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-slate-800 text-sm">{g.full_name}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-medium text-slate-800 text-sm">{g.full_name}</p>
+                  {(g.group_size ?? 1) > 1 && (
+                    <span className="text-xs bg-purple-100 text-purple-700 rounded-full px-2 py-0.5 font-medium">
+                      👥 {g.group_size} people
+                    </span>
+                  )}
+                  {g.table_name && (
+                    <span className="text-xs bg-slate-100 text-slate-600 rounded-full px-2 py-0.5">
+                      🪑 {g.table_name}
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-slate-500">{g.phone}</p>
                 {g.notes && <p className="text-xs text-slate-400 italic mt-0.5">{g.notes}</p>}
               </div>

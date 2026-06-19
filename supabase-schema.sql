@@ -22,6 +22,8 @@ create table if not exists guests (
   arrival_date date,
   arrival_time time,
   arrival_car_id uuid references cars(id) on delete set null,
+  group_size integer not null default 1,
+  table_name text,
   has_departure boolean not null default false,
   departure_flight text,
   departure_airline text,

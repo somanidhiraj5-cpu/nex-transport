@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const {
-    full_name, phone, notes,
+    full_name, phone, group_size, table_name, notes,
     has_arrival, arrival_flight, arrival_airline, arrival_date, arrival_time,
     has_departure, departure_flight, departure_airline, departure_date, departure_time,
   } = body;
@@ -23,6 +23,8 @@ export async function POST(req: NextRequest) {
   const guest = await db.guests.insert({
     full_name: full_name.trim(),
     phone: phone.trim(),
+    group_size: Number(group_size) || 1,
+    table_name: table_name?.trim() || null,
     notes: notes?.trim() || null,
     has_arrival: Boolean(has_arrival),
     arrival_flight: has_arrival ? arrival_flight?.trim() || null : null,

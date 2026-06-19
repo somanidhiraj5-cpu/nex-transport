@@ -11,6 +11,8 @@ export interface Guest {
   arrival_date?: string | null;
   arrival_time?: string | null;
   arrival_car_id?: string | null;
+  group_size: number;
+  table_name?: string | null;
   has_departure: boolean;
   departure_flight?: string | null;
   departure_airline?: string | null;
